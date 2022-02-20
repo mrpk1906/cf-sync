@@ -1,12 +1,13 @@
 package ip
 
 import (
+	"context"
+	"github.com/cloudflare/cloudflare-go"
 	"log"
 	"net"
 	"time"
 
-	"cloudflare-sync/config"
-	"github.com/cloudflare/cloudflare-go"
+	"github.com/mrpk1906/cf-sync/config"
 	"go.uber.org/ratelimit"
 )
 
@@ -33,13 +34,13 @@ type IPManager struct {
 	upstreamRecords []cloudflare.DNSRecord
 }
 
-// Start a new IP manager.
+// NewIPManager Start a new IP manager.
 func NewIPManager(settings *IPManagerSettings) (*IPManager, error) {
 	ipm := &IPManager{
 		limiter:     settings.Limiter,
 		config:      settings.Config,
 		recordQueue: make(chan cloudflare.DNSRecord, settings.BackPressureLimit),
-		logger: settings.Logger,
+		logger:      settings.Logger,
 	}
 
 	var err error
@@ -50,7 +51,7 @@ func NewIPManager(settings *IPManagerSettings) (*IPManager, error) {
 	}
 
 	// try to get the upstream records
-	ipm.upstreamRecords, err = ipm.client.DNSRecords(ipm.config.ZoneId, cloudflare.DNSRecord{})
+	ipm.upstreamRecords, err = ipm.client.DNSRecords(context.Background(), ipm.config.ZoneId, cloudflare.DNSRecord{})
 	if err != nil {
 		ipm.logger.Printf("error fetching upstream records: %s", err)
 		return &IPManager{}, err
@@ -59,9 +60,10 @@ func NewIPManager(settings *IPManagerSettings) (*IPManager, error) {
 	// build the ipify implementation
 	ipm.ipQueue = make(chan IP, settings.BackPressureLimit)
 	ipm.ipify = NewIPify(&IPifySettings{
-		Queue:   ipm.ipQueue,
-		Limiter: settings.Limiter,
-		Logger:  settings.Logger,
+		Queue:     ipm.ipQueue,
+		Limiter:   settings.Limiter,
+		Logger:    settings.Logger,
+		CheckIPv6: settings.Config.IpifyCheckIPv6,
 	})
 
 	return ipm, nil
@@ -80,7 +82,7 @@ func (ipm *IPManager) Die() {
 }
 
 func r() {
-	if r:= recover(); r != nil {
+	if r := recover(); r != nil {
 		return
 	}
 }
@@ -127,7 +129,7 @@ func (ipm *IPManager) updateARecord(ip net.IP, record cloudflare.DNSRecord) {
 	}
 
 	ipm.limiter.Take()
-	err := ipm.client.UpdateDNSRecord(ipm.config.ZoneId, record.ID, record)
+	err := ipm.client.UpdateDNSRecord(context.Background(), ipm.config.ZoneId, record.ID, record)
 	if err != nil {
 		ipm.logger.Printf("error uploading record: %s", err)
 		return
@@ -147,7 +149,7 @@ func (ipm *IPManager) updateAAAARecord(ip net.IP, record cloudflare.DNSRecord) {
 	}
 
 	ipm.limiter.Take()
-	err := ipm.client.UpdateDNSRecord(ipm.config.ZoneId, record.ID, record)
+	err := ipm.client.UpdateDNSRecord(context.Background(), ipm.config.ZoneId, record.ID, record)
 	if err != nil {
 		ipm.logger.Printf("error uploading record: %s", err)
 		return

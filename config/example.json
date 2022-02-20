@@ -1,13 +1,14 @@
 {
-  "zone_id": "",
-  "zone_name": "",
-  "api_token": "",
-  "frequency": "",
+  "zone_id": "xxx",
+  "zone_name": "abc.com",
+  "api_token": "xxx",
+  "frequency": 30,
+  "ipify_check_ipv6": false,
   "records": [
     {
       "type": "A",
-      "name": "my.domain.com",
-      "proxied": true,
+      "name": "abc.com",
+      "proxied": false,
       "ttl": 120,
       "priority": 1
     }

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"cloudflare-sync/config"
+	"github.com/mrpk1906/cf-sync/config"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/ratelimit"
 )
@@ -57,7 +57,7 @@ func TestIPManager_ticker(t *testing.T) {
 	a.NotNil(ipm, "the ip manager should not be nil")
 
 	ipm.ticker()
-	resp := <- ipm.ipQueue
+	resp := <-ipm.ipQueue
 	ipm.Die()
 
 	a.NotNil(resp.IPv4, "the ipv4 address should not be nil")

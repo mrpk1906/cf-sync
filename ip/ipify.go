@@ -16,24 +16,27 @@ type IIPify interface {
 
 // How we are interacting with IPify
 type IPify struct {
-	c       chan IP
-	logger  *log.Logger
-	limiter ratelimit.Limiter
+	c         chan IP
+	logger    *log.Logger
+	limiter   ratelimit.Limiter
+	checkIPv6 bool
 }
 
 // Our settings.
 type IPifySettings struct {
-	Queue chan IP
-	Limiter ratelimit.Limiter
-	Logger *log.Logger
+	Queue     chan IP
+	Limiter   ratelimit.Limiter
+	Logger    *log.Logger
+	CheckIPv6 bool
 }
 
 // Build a new IPify implementation
 func NewIPify(settings *IPifySettings) *IPify {
 	return &IPify{
-		c: settings.Queue,
-		limiter: settings.Limiter,
-		logger: settings.Logger,
+		c:         settings.Queue,
+		limiter:   settings.Limiter,
+		logger:    settings.Logger,
+		checkIPv6: settings.CheckIPv6,
 	}
 }
 
@@ -69,27 +72,29 @@ func (ipy *IPify) GetCurrentAddress() {
 		return
 	}
 
-	ipy.limiter.Take()
-	resp6, err := http.Get("https://api6.ipify.org")
-	if err != nil {
-		ipy.logger.Printf("cannot get ip: %s", err)
-		return
-	}
+	if ipy.checkIPv6 {
+		ipy.limiter.Take()
+		resp6, err := http.Get("https://api6.ipify.org")
+		if err != nil {
+			ipy.logger.Printf("cannot get ip: %s", err)
+			return
+		}
 
-	if resp6.StatusCode != http.StatusOK {
-		ipy.logger.Printf("cannot read response from ipify, response code: %d", resp6.StatusCode)
-	}
+		if resp6.StatusCode != http.StatusOK {
+			ipy.logger.Printf("cannot read response from ipify, response code: %d", resp6.StatusCode)
+		}
 
-	body, err = ioutil.ReadAll(resp6.Body)
-	if err != nil {
-		ipy.logger.Fatalf("cannot read ipify response: %s", err)
-		return
-	}
+		body, err = ioutil.ReadAll(resp6.Body)
+		if err != nil {
+			ipy.logger.Fatalf("cannot read ipify response: %s", err)
+			return
+		}
 
-	ipRef.IPv6 = net.ParseIP(string(body))
+		ipRef.IPv6 = net.ParseIP(string(body))
 
-	if ipRef.IsIPv6Available() {
-		ipy.logger.Printf("current public ipv6 is %s.", ipRef.IPv6)
+		if ipRef.IsIPv6Available() {
+			ipy.logger.Printf("current public ipv6 is %s.", ipRef.IPv6)
+		}
 	}
 
 	if err := resp4.Body.Close(); err != nil {

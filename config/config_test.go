@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -32,7 +33,7 @@ func TestConfig_NewClient(t *testing.T) {
 	client, err := config.NewClient(log.New(os.Stdout, "", log.LstdFlags))
 	a.NoError(err, "there should be no errors when creating a new client")
 
-	records, err := client.DNSRecords(config.ZoneId, cloudflare.DNSRecord{})
+	records, err := client.DNSRecords(context.Background(), config.ZoneId, cloudflare.DNSRecord{})
 	a.NoError(err, "there should be no errors when reading records")
 	a.NotEmpty(records, "the records should not be empty")
 }

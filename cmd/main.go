@@ -11,8 +11,8 @@ import (
 	"runtime"
 	"strings"
 
-	"cloudflare-sync/config"
-	"cloudflare-sync/ip"
+	"github.com/mrpk1906/cf-sync/config"
+	"github.com/mrpk1906/cf-sync/ip"
 	"go.uber.org/ratelimit"
 )
 

@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	ZoneId    string                 `json:"zone_id"`
-	ZoneName  string                 `json:"zone_name"`
-	ApiToken  string                 `json:"api_token"`
-	Frequency int                    `json:"frequency"`
-	Records   []cloudflare.DNSRecord `json:"records"`
-	client    *cloudflare.API
+	ZoneId         string                 `json:"zone_id"`
+	ZoneName       string                 `json:"zone_name"`
+	ApiToken       string                 `json:"api_token"`
+	Frequency      int                    `json:"frequency"`
+	Records        []cloudflare.DNSRecord `json:"records"`
+	IpifyCheckIPv6 bool                   `json:"ipify_check_ipv6"`
+	client         *cloudflare.API
 }
 
 func (c *Config) NewClient(logger *log.Logger) (*cloudflare.API, error) {
