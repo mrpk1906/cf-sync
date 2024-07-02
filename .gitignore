@@ -25,4 +25,5 @@ vendor/
 
 **/cf-sync
 **/cf-sync.exe
+**/cf-sync-linux.arm64
 **/production*.json

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -16,12 +15,9 @@ import (
 	"go.uber.org/ratelimit"
 )
 
-var (
-	filePath string
-)
+var filePath string
 
 var Usage = func() {
-
 	var s []string
 	switch runtime.GOOS {
 	case "windows":
@@ -30,7 +26,7 @@ var Usage = func() {
 		s = strings.Split(os.Args[0], "/")
 	}
 
-	fmt.Fprintf(os.Stderr, "\nUse Cloudflare as a dynamic DNS provider.\n\n"+
+	_, _ = fmt.Fprintf(os.Stderr, "\nUse Cloudflare as a dynamic DNS provider.\n\n"+
 		"Arguments of %s:\n", s[len(s)-1])
 
 	flag.PrintDefaults()
@@ -47,15 +43,14 @@ func main() {
 }
 
 func run() {
-
 	flag.Parse()
 	log.Println("hello from boulder.")
 
 	// build the new ip manager
-	ipm, err := ip.NewIPManager(&ip.IPManagerSettings{
+	ipm, err := ip.NewManager(&ip.ManagerSettings{
 		Limiter: ratelimit.New(4, ratelimit.WithoutSlack),
 		Config: func() *config.Config {
-			b, err := ioutil.ReadFile(filePath)
+			b, err := os.ReadFile(filePath)
 			if err != nil {
 				log.Fatalf("cannot find production configuration file at %s", filePath)
 			}
@@ -79,7 +74,7 @@ func run() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
-		for _ = range c {
+		for range c {
 			ipm.Die()
 			log.Println("all done.")
 			os.Exit(0)

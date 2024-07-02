@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        go: ["1.12.x", "1.13.x"]
+        go: ["1.22.x"]
 
     steps:
       - name: Set up Go
@@ -23,14 +23,8 @@ jobs:
         run: |
           pushd cmd
           go build -v .
+          GOOS=linux GOARCH=arm64 go build -v -o cf-sync-linux.arm64
           popd
-      
-      - name: Static code check
-        run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
-          go get -u github.com/gordonklaus/ineffassign
-          ineffassign .
-          go vet ./...
           
       - name: Test
         run: |

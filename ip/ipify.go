@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -9,12 +9,12 @@ import (
 	"go.uber.org/ratelimit"
 )
 
-// How do we want to interact with IPify?
+// IIPify How do we want to interact with IPify?
 type IIPify interface {
 	GetCurrentAddress()
 }
 
-// How we are interacting with IPify
+// IPify How we are interacting with IPify
 type IPify struct {
 	c         chan IP
 	logger    *log.Logger
@@ -22,7 +22,7 @@ type IPify struct {
 	checkIPv6 bool
 }
 
-// Our settings.
+// IPifySettings Our settings.
 type IPifySettings struct {
 	Queue     chan IP
 	Limiter   ratelimit.Limiter
@@ -30,7 +30,7 @@ type IPifySettings struct {
 	CheckIPv6 bool
 }
 
-// Build a new IPify implementation
+// NewIPify Build a new IPify implementation
 func NewIPify(settings *IPifySettings) *IPify {
 	return &IPify{
 		c:         settings.Queue,
@@ -41,7 +41,6 @@ func NewIPify(settings *IPifySettings) *IPify {
 }
 
 func (ipy *IPify) GetCurrentAddress() {
-
 	ipy.logger.Println("refreshing public ip.")
 
 	var ipRef IP
@@ -52,13 +51,15 @@ func (ipy *IPify) GetCurrentAddress() {
 		ipy.logger.Fatalf("cannot get ip: %s", err)
 		return
 	}
+	defer resp4.Body.Close()
 
 	if resp4.StatusCode != http.StatusOK {
 		ipy.logger.Printf("cannot read response from ipify, response code: %d", resp4.StatusCode)
 		return
 	}
 
-	body, err := ioutil.ReadAll(resp4.Body)
+	var body []byte
+	body, err = io.ReadAll(resp4.Body)
 	if err != nil {
 		ipy.logger.Fatalf("cannot read ipify response: %s", err)
 		return
@@ -67,24 +68,26 @@ func (ipy *IPify) GetCurrentAddress() {
 	ipRef.IPv4 = net.ParseIP(string(body))
 	ipy.logger.Printf("current public ipv4 is %s.", ipRef.IPv4)
 
-	if err := resp4.Body.Close(); err != nil {
+	if err = resp4.Body.Close(); err != nil {
 		ipy.logger.Fatal(err)
 		return
 	}
 
 	if ipy.checkIPv6 {
 		ipy.limiter.Take()
-		resp6, err := http.Get("https://api6.ipify.org")
+		var resp6 *http.Response
+		resp6, err = http.Get("https://api6.ipify.org")
 		if err != nil {
 			ipy.logger.Printf("cannot get ip: %s", err)
 			return
 		}
+		defer resp6.Body.Close()
 
 		if resp6.StatusCode != http.StatusOK {
 			ipy.logger.Printf("cannot read response from ipify, response code: %d", resp6.StatusCode)
 		}
 
-		body, err = ioutil.ReadAll(resp6.Body)
+		body, err = io.ReadAll(resp6.Body)
 		if err != nil {
 			ipy.logger.Fatalf("cannot read ipify response: %s", err)
 			return
@@ -97,7 +100,7 @@ func (ipy *IPify) GetCurrentAddress() {
 		}
 	}
 
-	if err := resp4.Body.Close(); err != nil {
+	if err = resp4.Body.Close(); err != nil {
 		ipy.logger.Fatal(err)
 		return
 	}

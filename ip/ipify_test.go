@@ -12,7 +12,7 @@ import (
 var settings = &IPifySettings{
 	Queue:   make(chan IP, 1),
 	Limiter: ratelimit.New(1),
-	Logger: log.New(os.Stdout, "", log.LstdFlags),
+	Logger:  log.New(os.Stdout, "", log.LstdFlags),
 }
 
 func TestNewIPify(t *testing.T) {
@@ -21,13 +21,12 @@ func TestNewIPify(t *testing.T) {
 }
 
 func TestIPify_GetCurrentAddress(t *testing.T) {
-
 	a := assert.New(t)
 
 	n := NewIPify(settings)
 	n.GetCurrentAddress()
 
-	res := <- settings.Queue
+	res := <-settings.Queue
 	a.NotEmpty(res.IPv4, "the ipv4 address should not be empty")
 
 	if res.IsIPv6Available() {

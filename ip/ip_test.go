@@ -8,7 +8,6 @@ import (
 )
 
 func TestIP_IsIPv6Available(t *testing.T) {
-
 	a := assert.New(t)
 
 	i := IP{

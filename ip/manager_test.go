@@ -2,7 +2,6 @@ package ip
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -20,7 +19,7 @@ var (
 	conf = func() *config.Config {
 		p, _ := filepath.Abs("..")
 		fp, _ := filepath.Abs(path.Join(p, "testdata", "production-test.json"))
-		b, _ := ioutil.ReadFile(fp)
+		b, _ := os.ReadFile(fp)
 		var config config.Config
 		_ = json.Unmarshal(b, &config)
 		return &config
@@ -32,7 +31,7 @@ func TestNewIPManager(t *testing.T) {
 
 	t.Logf("%v", conf)
 
-	ipm, err := NewIPManager(&IPManagerSettings{
+	ipm, err := NewManager(&ManagerSettings{
 		Limiter:           ratelimit.New(1),
 		Config:            conf,
 		Logger:            log.New(os.Stdout, "", log.LstdFlags),
@@ -47,7 +46,7 @@ func TestIPManager_ticker(t *testing.T) {
 
 	t.Logf("%v", conf)
 
-	ipm, err := NewIPManager(&IPManagerSettings{
+	ipm, err := NewManager(&ManagerSettings{
 		Limiter:           ratelimit.New(1),
 		Config:            conf,
 		Logger:            log.New(os.Stdout, "", log.LstdFlags),
@@ -73,7 +72,7 @@ func TestIPManager_Run(t *testing.T) {
 
 	t.Logf("%v", conf)
 
-	ipm, err := NewIPManager(&IPManagerSettings{
+	ipm, err := NewManager(&ManagerSettings{
 		Limiter:           ratelimit.New(1),
 		Config:            conf,
 		Logger:            log.New(os.Stdout, "", log.LstdFlags),
