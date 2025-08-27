@@ -36,8 +36,3 @@ Don't forget to pass in your own `production.json` file via docker volumes.
 ### Kubernetes
 
 There is a `kubernetes.yml` file which you can use to deploy a `ConfigMap` and `Deployment` for this. You shouldn't ever need more than one replica. Fill out the `ConfigMap`, `spec.template.spec.containers[0].env` values, and `data.production.json` with your configuration.
-
-## Contributors
-
-This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
-<a href="https://github.com/mxplusb/cloudflare-sync/graphs/contributors"><img src="https://opencollective.com/cloudflare-dyns/contributors.svg?width=890&button=false" /></a>
